@@ -29,8 +29,8 @@ class TestRobot(wpilib.TimedRobot):
 
         _ = rLeaderConfig.apply(globalConfig).inverted(True)
 
-        _ = lFollowerConfig.apply(globalConfig).follow(self.motors["left_front"]).inverted(True)
-        _ = rFollowerConfig.apply(globalConfig).follow(self.motors["right_front"])
+        _ = lFollowerConfig.apply(globalConfig).inverted(True)
+        _ = rFollowerConfig.apply(globalConfig)
 
         _ = self.motors["left_front"].configure(
             globalConfig,
@@ -54,7 +54,10 @@ class TestRobot(wpilib.TimedRobot):
             rev.SparkBase.PersistMode.kPersistParameters
         )
 
-        self.drivetrain = wpilib.drive.DifferentialDrive(self.motors["left_front"], self.motors["right_front"])
+        left_group = wpilib.MotorControllerGroup(self.motors["left_back"], self.motors["left_front"])
+        right_group = wpilib.MotorControllerGroup(self.motors["right_back"], self.motors["right_front"])
+
+        self.drivetrain = wpilib.drive.DifferentialDrive(left_group, right_group)
 
         self.motors["elevator1"] = rev.SparkMax(6, rev.SparkMax.MotorType.kBrushed)
         self.motors["elevator2"] = rev.SparkMax(7, rev.SparkMax.MotorType.kBrushed)
@@ -67,7 +70,7 @@ class TestRobot(wpilib.TimedRobot):
             rev.SparkBase.PersistMode.kPersistParameters
         )
 
-        self.motors["thingy"] = rev.SparkMax(8, rev.SparkMax.MotorType.kBrushless)
+        self.motors["shooter"] = rev.SparkMax(8, rev.SparkMax.MotorType.kBrushless)
 
     @override
     def autonomousPeriodic(self) -> None:
@@ -80,6 +83,9 @@ class TestRobot(wpilib.TimedRobot):
         self.drivetrain.tankDrive(
             0.0, 0.0
         )
+
+        for motor in self.motors.values():
+            motor.set(0.0)
 
     @override
     def teleopPeriodic(self) -> None:
@@ -97,8 +103,8 @@ class TestRobot(wpilib.TimedRobot):
             self.motors["elevator2"].set(0.0)
         
         if self.controller.getLeftBumperButton():
-            self.motors["thingy"].set(-1.0)
+            self.motors["shooter"].set(-1.0)
         elif self.controller.getRightBumperButton():
-            self.motors["thingy"].set(1.0)
+            self.motors["shooter"].set(1.0)
         else:
-            self.motors["thingy"].set(0.0)
+            self.motors["shooter"].set(0.0)
