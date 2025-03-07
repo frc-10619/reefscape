@@ -38,8 +38,8 @@ class TestRobot(wpilib.TimedRobot):
 
         _ = rLeaderConfig.apply(globalConfig).inverted(True)
 
-        _ = lFollowerConfig.apply(globalConfig).inverted(True)
-        _ = rFollowerConfig.apply(globalConfig)
+        _ = lFollowerConfig.apply(globalConfig)
+        _ = rFollowerConfig.apply(rLeaderConfig)
 
         _ = self.motors["left_front"].configure(
             globalConfig,
@@ -68,20 +68,10 @@ class TestRobot(wpilib.TimedRobot):
 
         self.drivetrain = wpilib.drive.DifferentialDrive(left_group, right_group)
 
-        self.motors["elevator1"] = rev.SparkMax(6, rev.SparkMax.MotorType.kBrushed)
-        self.motors["elevator2"] = rev.SparkMax(7, rev.SparkMax.MotorType.kBrushed)
-
-        elevatorFollower = rev.SparkMaxConfig().inverted(True)
-
-        _ = self.motors["elevator2"].configure(
-            elevatorFollower,
-            rev.SparkBase.ResetMode.kResetSafeParameters,
-            rev.SparkBase.PersistMode.kPersistParameters
-        )
-
         self.motors["shooter"] = rev.SparkMax(8, rev.SparkMax.MotorType.kBrushless)
 
         self.gyro = navx.AHRS(navx.AHRS.NavXComType.kMXP_SPI)
+        self.gyro.reset()
 
         self.timer = wpilib.Timer()
         self.timer.start()
@@ -99,10 +89,7 @@ class TestRobot(wpilib.TimedRobot):
 
     @override
     def autonomousPeriodic(self) -> None:
-        if self.timer.get() < 0.25:
-            self.drivetrain.tankDrive(0.5, -0.5)
-        elif self.timer.get() < 0.5:
-            self.drivetrain.tankDrive(-0.5, -0.5)
+        self.drivetrain.tankDrive(0.5, 0.5)
     
     @override
     def autonomousExit(self) -> None:
@@ -116,17 +103,8 @@ class TestRobot(wpilib.TimedRobot):
     @override
     def teleopPeriodic(self) -> None:
         self.drivetrain.tankDrive(
-            self.controller.getLeftY(), self.controller.getRightY()
+            -self.controller.getLeftY(), -self.controller.getRightY()
         )
-        if self.controller.getAButton():
-            self.motors["elevator1"].set(1.0)
-            self.motors["elevator2"].set(1.0)
-        elif self.controller.getBButton():
-            self.motors["elevator1"].set(-1.0)
-            self.motors["elevator2"].set(-1.0)
-        else:
-            self.motors["elevator1"].set(0.0)
-            self.motors["elevator2"].set(0.0)
         
         if self.controller.getLeftBumperButton():
             self.motors["shooter"].set(-1.0)
