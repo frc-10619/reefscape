@@ -19,15 +19,15 @@ robotpy_extras = [
     # "apriltag",
     # "commands2",
     # "cscore",
-    # "navx",
+    "navx",
     # "pathplannerlib",
     # "phoenix5",
     # "phoenix6",
     "rev",
     # "romi",
-    # "sim",
+    "sim",
     # "xrp",
 ]
 
 # Other pip packages to install
-requires = []
+requires = ["robotpy-wpimath"]

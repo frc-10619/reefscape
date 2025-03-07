@@ -1,6 +1,12 @@
 from typing import override
 import wpilib
 import wpilib.drive
+import wpilib.simulation
+import navx
+import wpimath # pyright: ignore[reportUnusedImport]
+import wpimath.estimator
+import wpimath.kinematics
+import wpimath.geometry
 import rev
 
 
@@ -8,8 +14,11 @@ class TestRobot(wpilib.TimedRobot):
     pd: wpilib.PowerDistribution # pyright: ignore[reportUninitializedInstanceVariable]
     motors: dict[str, rev.SparkMax] = {}
     drivetrain: wpilib.drive.DifferentialDrive # pyright: ignore[reportUninitializedInstanceVariable]
+    pose_estim: wpimath.kinematics.DifferentialDriveOdometry # pyright: ignore[reportUninitializedInstanceVariable]
     controller: wpilib.XboxController # pyright: ignore[reportUninitializedInstanceVariable]
-    
+    field: wpilib.Field2d # pyright: ignore[reportUninitializedInstanceVariable]
+    #FIXME: hardcoding navx isnt best idea
+    gyro: navx.AHRS # pyright: ignore[reportUninitializedInstanceVariable]
 
     @override
     def robotInit(self) -> None:
@@ -71,6 +80,31 @@ class TestRobot(wpilib.TimedRobot):
         )
 
         self.motors["shooter"] = rev.SparkMax(8, rev.SparkMax.MotorType.kBrushless)
+
+        # FIXME: REPLACE WITH REAL GYRO!!!!!!!!!!!!!! REPLACE WITH REAL GYRO!!!!!
+        self.gyro = navx.AHRS(navx.AHRS.NavXComType.kMXP_SPI)
+
+        self.pose_estim = wpimath.kinematics.DifferentialDriveOdometry(
+            gyroAngle=self.gyro.getRotation2d(),
+            leftDistance=self.motors['left_front'].getAbsoluteEncoder().getPosition().real,
+            rightDistance=self.motors['right_front'].getAbsoluteEncoder().getPosition().real,
+            initialPose=wpimath.geometry.Pose2d()
+        )
+
+        self.field = wpilib.Field2d()
+
+    @override
+    def robotPeriodic(self) -> None:
+        _ = self.pose_estim.update(
+            gyroAngle=self.gyro.getRotation2d(),
+            leftDistance=self.motors['left_front'].getAbsoluteEncoder().getPosition().real,
+            rightDistance=self.motors['right_front'].getAbsoluteEncoder().getPosition().real
+        )
+        self.field.setRobotPose(self.pose_estim.getPose())
+        wpilib.SmartDashboard.putData(
+            "field_status",
+            self.field
+        )
 
     @override
     def autonomousPeriodic(self) -> None:
