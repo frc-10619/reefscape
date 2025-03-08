@@ -8,14 +8,33 @@ import wpimath.estimator
 import wpimath.kinematics
 import wpimath.geometry
 import rev
+import math
 
+class SigmoidController(wpilib.XboxController):
+    @staticmethod
+    def sigmoid(x: float, k: float = 0.1, s: float=2) -> float:
+        return ((1 / (1 + math.exp(-x / k))) - 0.5) * s
+
+    @override
+    def getLeftY(self) -> float:
+        y = super().getLeftY()
+        y = self.sigmoid(y)
+        return y
+
+    @override
+    def getRightY(self) -> float:
+        y = super().getRightY()
+        y = self.sigmoid(y)
+        return y
+
+# FIXME: cubed controller needed but i forgot how geometric stretching works
 
 class TestRobot(wpilib.TimedRobot):
     pd: wpilib.PowerDistribution # pyright: ignore[reportUninitializedInstanceVariable]
     motors: dict[str, rev.SparkMax] = {}
     drivetrain: wpilib.drive.DifferentialDrive # pyright: ignore[reportUninitializedInstanceVariable]
     pose_estim: wpimath.kinematics.DifferentialDriveOdometry # pyright: ignore[reportUninitializedInstanceVariable]
-    controller: wpilib.XboxController # pyright: ignore[reportUninitializedInstanceVariable]
+    controller: SigmoidController # pyright: ignore[reportUninitializedInstanceVariable]
     field: wpilib.Field2d # pyright: ignore[reportUninitializedInstanceVariable]
     gyro: navx.AHRS # pyright: ignore[reportUninitializedInstanceVariable]
     timer: wpilib.Timer # pyright: ignore[reportUninitializedInstanceVariable]
@@ -24,7 +43,7 @@ class TestRobot(wpilib.TimedRobot):
     def robotInit(self) -> None:
         self.pd = wpilib.PowerDistribution()
 
-        self.controller = wpilib.XboxController(0)
+        self.controller = SigmoidController(0)
 
         self.motors["right_back"] = rev.SparkMax(2, rev.SparkMax.MotorType.kBrushed)
         self.motors["right_front"] = rev.SparkMax(3, rev.SparkMax.MotorType.kBrushed)
@@ -107,8 +126,8 @@ class TestRobot(wpilib.TimedRobot):
         )
         
         if self.controller.getLeftBumperButton():
-            self.motors["shooter"].set(-1.0)
+            self.motors["shooter"].set(-0.275)
         elif self.controller.getRightBumperButton():
-            self.motors["shooter"].set(1.0)
+            self.motors["shooter"].set(0.275)   
         else:
             self.motors["shooter"].set(0.0)
