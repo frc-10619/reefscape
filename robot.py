@@ -186,9 +186,9 @@ class TestRobot(wpilib.TimedRobot):
 
         pov = self.controller.getPOV()
 
-        if pov is 0:
+        if pov == 0:
             self.motors["grabber"].set(0.25)
-        elif pov is 180:
+        elif pov == 180:
             self.motors["grabber"].set(-0.25)
         else:
             self.motors["grabber"].set(0)
